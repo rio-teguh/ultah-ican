@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Presensi Biometrik — SMK Islam Al Hikmah Istiqomah</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          colors: {
+            navy: {
+              850: '#0B192C',
+              900: '#091424',
+              950: '#050C17',
+            },
+            emerald: {
+              600: '#059669',
+              925: '#032c22',
+              950: '#021f18',
+            },
+            gold: {
+              400: '#FBBF24',
+              500: '#F59E0B',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    .islamic-pattern {
+      background-image: radial-gradient(rgba(245, 158, 11, 0.13) 1px, transparent 1px),
+                        radial-gradient(rgba(5, 150, 105, 0.09) 1px, transparent 1px);
+      background-size: 36px 36px;
+      background-position: 0 0, 18px 18px;
+    }
+
+    @keyframes scanLaser {
+      0%, 100% { top: 8%; opacity: 0.5; }
+      50% { top: 90%; opacity: 1; }
+    }
+    .animate-scan-laser {
+      animation: scanLaser 1.35s ease-in-out infinite;
+    }
+
+    @keyframes shimmerSweep {
+      0% { transform: translateX(-120%) skewX(-20deg); }
+      100% { transform: translateX(220%) skewX(-20deg); }
+    }
+    .btn-shimmer::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      animation: shimmerSweep 2.8s infinite;
+    }
+
+    .mirror-video {
+      transform: scaleX(-1);
+    }
+
+    @keyframes candleFlicker {
+      0%, 100% { transform: translateX(-50%) scale(1) rotate(-2deg); opacity: 0.95; }
+      25% { transform: translateX(-50%) scale(1.08, 0.94) rotate(2deg); opacity: 1; }
+      50% { transform: translateX(-50%) scale(0.95, 1.07) rotate(-1deg); opacity: 0.9; }
+      75% { transform: translateX(-50%) scale(1.05, 0.96) rotate(3deg); opacity: 1; }
+    }
+    .candle-flame {
+      animation: candleFlicker 0.85s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+
+    @keyframes smokeRise {
+      0% { transform: translate(-50%, 0) scale(0.6); opacity: 0.85; }
+      100% { transform: translate(-35%, -44px) scale(1.9); opacity: 0; }
+    }
+    .candle-smoke {
+      animation: smokeRise 1.8s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(110vh) rotate(-4deg); opacity: 0; }
+      10% { opacity: 0.85; }
+      50% { transform: translateY(45vh) rotate(4deg); }
+      90% { opacity: 0.85; }
+      100% { transform: translateY(-20vh) rotate(-3deg); opacity: 0; }
+    }
+    .balloon-float {
+      animation: floatUp linear infinite;
+    }
+
+    @keyframes giftWobble {
+      0%, 100% { transform: rotate(0deg) scale(1); }
+      25% { transform: rotate(-2.5deg) scale(1.02); }
+      75% { transform: rotate(2.5deg) scale(1.02); }
+    }
+    .gift-idle:hover {
+      animation: giftWobble 0.6s ease-in-out infinite;
+    }
+
+    @keyframes popIn {
+      0% { opacity: 0; transform: scale(0.92) translateY(18px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .animate-pop-in {
+      animation: popIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-navy-950 text-slate-100 font-sans antialiased selection:bg-amber-400 selection:text-navy-950 overflow-x-hidden">
+
+  <!-- Tombol Global Fullscreen di Sudut Kanan Atas -->
+  <button
+    type="button"
+    onclick="toggleFullscreen()"
+    title="Layar Penuh (Fullscreen)"
+    class="fixed top-4 right-4 z-50 w-11 h-11 rounded-2xl bg-navy-900/90 border border-amber-400/40 hover:border-amber-400 text-amber-300 flex items-center justify-center shadow-xl backdrop-blur-md active:scale-95 transition cursor-pointer"
+  >
+    <svg id="fullscreen-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15m-11.25 5.25h4.5m-4.5 0v-4.5m0 4.5L9 15" />
+    </svg>
+  </button>
+
+  <!-- ===================================================================== -->
+  <!-- LAYAR 1 & 2: PORTAL PRESENSI BIOMETRIK                                -->
+  <!-- ===================================================================== -->
+  <section id="attendance-screen" class="min-h-screen w-full flex flex-col justify-between bg-gradient-to-br from-navy-950 via-[#0B192C] to-emerald-950 islamic-pattern relative transition-all duration-700">
+    
+    <!-- Header Resmi Sekolah -->
+    <header class="w-full border-b border-amber-400/30 bg-navy-950/90 backdrop-blur-md px-4 sm:px-8 lg:px-12 py-4 shadow-xl">
+      <div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4 text-center sm:text-left">
+          <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-[#059669] to-emerald-900 border-2 border-[#F59E0B] flex items-center justify-center shadow-lg shadow-emerald-950/80 shrink-0">
+            <svg class="w-9 h-9 sm:w-10 sm:h-10 text-amber-300" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M32 6L54 16V31C54 45.5 44.5 56.5 32 60C19.5 56.5 10 45.5 10 31V16L32 6Z" stroke="currentColor" stroke-width="3" fill="rgba(245,158,11,0.15)"/>
+              <path d="M21 27C25 25 29 26 32 28.5C35 26 39 25 43 27V42C39 40 35 41 32 43.5C29 41 25 40 21 42V27Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+              <path d="M32 28.5V43.5" stroke="currentColor" stroke-width="2.5"/>
+              <path d="M32 14L33.8 18.2L38.4 18.6L34.9 21.6L36 26L32 23.6L28 26L29.1 21.6L25.6 18.6L30.2 18.2L32 14Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs sm:text-sm font-extrabold tracking-widest uppercase text-[#F59E0B]">
+              SMK ISLAM AL HIKMAH ISTIQOMAH
+            </p>
+            <h1 class="text-lg sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white">
+              SISTEM PRESENSI BIOMETRIK PEGAWAI
+            </h1>
+            <p class="text-xs sm:text-sm font-medium text-emerald-300">
+              Papan Interaktif Digital • Ruang Kantor &amp; Dewan Guru
+            </p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row lg:flex-col items-center lg:items-end gap-1.5 bg-[#0B192C]/95 border border-amber-400/25 rounded-2xl px-5 py-3 shadow-inner">
+          <div class="flex items-center gap-2 text-xs sm:text-sm font-semibold text-emerald-400">
+            <span class="relative flex h-2.5 w-2.5">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#059669]"></span>
+            </span>
+            <span>Sensor Biometrik Siap</span>
+          </div>
+          <div class="text-center lg:text-right">
+            <div id="live-clock" class="text-2xl sm:text-3xl font-extrabold tracking-wider text-amber-300 tabular-nums">
+              00:00:00 WIB
+            </div>
+            <div id="live-date" class="text-xs sm:text-sm text-slate-300 font-medium">
+              -
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Konten Utama Kios Presensi -->
+    <main class="flex-1 flex items-center justify-center px-4 sm:px-8 py-6 sm:py-8">
+      <div class="w-full max-w-4xl bg-[#0B192C]/95 border border-amber-400/35 rounded-3xl shadow-2xl shadow-black/70 backdrop-blur-xl overflow-hidden">
+        
+        <div class="bg-gradient-to-r from-[#059669]/40 via-[#0B192C] to-navy-950 px-6 sm:px-8 py-4 border-b border-amber-400/25 flex items-center justify-between">
+          <span class="text-xs sm:text-sm font-bold uppercase tracking-widest text-amber-300 flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            Terminal Presensi Wajah Otomatis
+          </span>
+          <span class="text-xs font-mono text-slate-300 bg-navy-950/80 px-3 py-1 rounded-full border border-slate-700">
+            TERMINAL: IFP-SMARTBOARD-01
+          </span>
+        </div>
+
+        <!-- TAHAP 1: PORTAL ABSENSI UMUM (NETRAL) -->
+        <div id="stage-1-neutral" class="p-8 sm:p-12 lg:p-14 text-center space-y-8">
+          <div class="space-y-3 max-w-2xl mx-auto">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#059669]/20 border border-emerald-400/40 text-emerald-300 text-xs sm:text-sm font-bold">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              Presensi Kehadiran Harian Pendidik &amp; Tenaga Kependidikan
+            </div>
+            <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Silakan Lakukan Presensi Kehadiran
+            </h2>
+            <p class="text-sm sm:text-lg text-slate-300">
+              Sentuh tombol di bawah untuk mengaktifkan pemindai wajah biometrik dan mencatat kehadiran Anda hari ini.
+            </p>
+          </div>
+
+          <div class="max-w-xl mx-auto space-y-4">
+            <button
+              id="btn-absen"
+              type="button"
+              onclick="startCameraFaceScan()"
+              class="btn-shimmer relative overflow-hidden w-full py-7 sm:py-8 px-8 rounded-2xl bg-gradient-to-r from-[#059669] via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 active:scale-[0.98] text-navy-950 font-black text-2xl sm:text-3xl tracking-wide shadow-2xl shadow-emerald-600/35 border-2 border-[#F59E0B] flex items-center justify-center gap-4 transition-all cursor-pointer"
+            >
+              <svg class="w-10 h-10 sm:w-11 sm:h-11 text-navy-950 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" />
+              </svg>
+              <span>ABSEN KEHADIRAN</span>
+            </button>
+            <p class="text-xs sm:text-sm text-slate-400">
+              Papan Interaktif Digital • Pastikan posisi wajah menghadap kamera saat memindai
+            </p>
+          </div>
+        </div>
+
+        <!-- TAHAP 2A: PEMINDAI WAJAH KAMERA & COUNTDOWN 3..2..1 -->
+        <div id="stage-2a-camera-scan" class="hidden p-6 sm:p-10 text-center space-y-6 animate-pop-in">
+          <div class="space-y-1">
+            <span class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-400/15 border border-amber-400/50 text-amber-300 text-xs font-extrabold uppercase tracking-widest">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              Pemindaian Wajah Biometrik Aktif
+            </span>
+            <h2 class="text-xl sm:text-3xl font-extrabold text-white">
+              Arahkan Wajah Anda ke Kamera
+            </h2>
+            <p id="camera-status-text" class="text-sm sm:text-base text-emerald-300">
+              Menginisialisasi kamera biometrik... Tetap tenang selama hitungan mundur.
+            </p>
+          </div>
+
+          <div class="relative w-72 h-80 sm:w-80 sm:h-96 mx-auto rounded-3xl overflow-hidden bg-navy-950 border-2 border-emerald-400/70 shadow-2xl shadow-emerald-950/90">
+            <video id="webcam-video" autoplay playsinline muted class="mirror-video w-full h-full object-cover"></video>
+            <canvas id="capture-canvas" class="hidden"></canvas>
+
+            <div id="camera-fallback-sim" class="hidden absolute inset-0 bg-gradient-to-b from-navy-900 to-emerald-950 flex flex-col items-center justify-center p-6 text-center space-y-3">
+              <div class="w-24 h-24 rounded-full border-2 border-dashed border-amber-400 flex items-center justify-center text-amber-300">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                </svg>
+              </div>
+              <p class="text-sm font-bold text-amber-300">Sinkronisasi Database Foto Pegawai</p>
+              <p class="text-xs text-slate-300">Mengambil profil identitas dari server sekolah...</p>
+            </div>
+
+            <div class="absolute inset-4 pointer-events-none">
+              <div class="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-[#F59E0B] rounded-tl-xl"></div>
+              <div class="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-[#F59E0B] rounded-tr-xl"></div>
+              <div class="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-[#F59E0B] rounded-bl-xl"></div>
+              <div class="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-[#F59E0B] rounded-br-xl"></div>
+              <div class="absolute inset-x-8 inset-y-6 border-2 border-dashed border-emerald-400/50 rounded-full"></div>
+            </div>
+
+            <div class="animate-scan-laser absolute left-3 right-3 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_16px_#34d399] pointer-events-none"></div>
+
+            <div class="absolute bottom-4 inset-x-0 flex justify-center pointer-events-none">
+              <div class="px-5 py-2 rounded-2xl bg-navy-950/90 border border-amber-400/70 backdrop-blur-md flex items-center gap-3 shadow-lg">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Memindai dalam</span>
+                <span id="scan-countdown-number" class="text-2xl sm:text-3xl font-black text-amber-300 tabular-nums">3</span>
+              </div>
+            </div>
+
+            <div id="camera-flash-effect" class="hidden absolute inset-0 bg-white z-20 pointer-events-none"></div>
+          </div>
+
+          <div class="max-w-md mx-auto">
+            <div class="h-2.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+              <div id="scan-progress-bar" class="h-full w-0 bg-gradient-to-r from-[#059669] to-[#F59E0B] transition-all duration-300"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAHAP 2B: KARTU VERIFIKASI IDENTITAS -->
+        <div id="stage-2b-verification" class="hidden p-6 sm:p-10 space-y-6 animate-pop-in">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-700/80 pb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-[#059669]/25 border border-emerald-400/50 flex items-center justify-center text-emerald-400 shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                </svg>
+              </div>
+              <div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                  VERIFIKASI IDENTITAS PEGAWAI
+                </h2>
+                <p id="verification-subtitle" class="text-xs sm:text-sm text-emerald-300 font-medium">
+                  Wajah berhasil dipindai &amp; dicocokkan dengan data kepegawaian
+                </p>
+              </div>
+            </div>
+            <span class="self-start sm:self-center px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/45 text-amber-300 text-xs font-bold">
+              COCOK 99.8%
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center bg-navy-950/90 border border-slate-700/90 rounded-2xl p-5 sm:p-7 shadow-inner">
+            <div class="md:col-span-4 flex flex-col items-center space-y-2">
+              <div class="w-44 h-56 sm:w-48 sm:h-60 rounded-2xl p-1.5 bg-gradient-to-b from-[#F59E0B] via-[#059669] to-[#0B192C] shadow-xl">
+                <div class="w-full h-full rounded-xl overflow-hidden bg-slate-100 relative">
+                  <img
+                    id="verified-photo-img"
+                    src="image_462aa6.png"
+                    alt="Foto Verifikasi IKHSAN HUZALI, M.Pd"
+                    style="object-fit: cover; object-position: top center;"
+                    class="w-full h-full"
+                    onerror="this.onerror=null; this.src='https://placehold.co/400x500/064e3b/fbbf24?text=IKHSAN+HUZALI,+M.Pd';"
+                  />
+                  <div class="absolute inset-x-0 bottom-0 bg-navy-950/85 py-1.5 px-2 text-center border-t border-amber-400/40">
+                    <span id="verified-photo-badge" class="text-[10px] font-extrabold tracking-widest uppercase text-amber-300">
+                      TANGKAPAN BIOMETRIK
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="md:col-span-8 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="sm:col-span-2 bg-[#0B192C] border border-slate-700/80 rounded-xl p-4">
+                  <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Nama Lengkap</p>
+                  <p class="text-2xl sm:text-3xl font-extrabold text-amber-300 mt-0.5">
+                    IKHSAN HUZALI, M.Pd
+                  </p>
+                </div>
+
+                <div class="bg-[#0B192C] border border-slate-700/80 rounded-xl p-4">
+                  <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Unit Kerja</p>
+                  <p class="text-sm sm:text-base font-bold text-white mt-0.5">
+                    SMK Islam Al Hikmah Istiqomah
+                  </p>
+                </div>
+
+                <div class="bg-[#0B192C] border border-slate-700/80 rounded-xl p-4">
+                  <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Status Kepegawaian</p>
+                  <p class="text-sm sm:text-base font-bold text-emerald-300 mt-0.5">
+                    Pendidik / Guru Aktif
+                  </p>
+                </div>
+
+                <div class="sm:col-span-2 bg-[#0B192C] border border-slate-700/80 rounded-xl p-4 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Waktu Presensi Tercatat</p>
+                    <p id="recorded-timestamp" class="text-sm sm:text-lg font-extrabold text-white tabular-nums mt-0.5">
+                      -
+                    </p>
+                  </div>
+                  <span class="px-3 py-1 rounded-lg bg-[#059669]/25 border border-emerald-400/40 text-emerald-300 text-xs font-bold">
+                    Presensi Masuk
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4 pt-1">
+            <p class="text-center text-sm sm:text-base text-slate-200 font-medium">
+              Pastikan foto dan identitas di atas sudah sesuai, lalu tekan tombol <strong class="text-amber-300">VERIFIKASI</strong>.
+            </p>
+
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <button
+                type="button"
+                onclick="retakeCameraScan()"
+                class="w-full sm:w-auto py-4 px-6 rounded-2xl bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-600 text-slate-200 font-bold text-base sm:text-lg flex items-center justify-center gap-2 transition cursor-pointer"
+              >
+                <span>🔄</span>
+                <span>Ulangi Scan</span>
+              </button>
+
+              <button
+                id="btn-verify-identity"
+                type="button"
+                onclick="confirmVerificationAndTriggerSurprise()"
+                class="btn-shimmer relative overflow-hidden w-full sm:w-auto sm:min-w-[330px] py-5 sm:py-6 px-10 rounded-2xl bg-gradient-to-r from-[#059669] via-emerald-400 to-[#F59E0B] hover:from-emerald-400 hover:to-amber-300 active:scale-[0.98] text-navy-950 font-black text-2xl sm:text-3xl tracking-wider shadow-2xl shadow-emerald-500/35 border-2 border-amber-200 flex items-center justify-center gap-3 transition-all cursor-pointer"
+              >
+                <svg class="w-8 h-8 sm:w-9 sm:h-9 text-navy-950 shrink-0" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <span>VERIFIKASI</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="w-full py-4 px-6 text-center text-xs sm:text-sm text-slate-400 border-t border-slate-800/80 bg-navy-950/80">
+      &copy; 2026 Sistem Presensi Biometrik Pegawai • <span class="text-[#F59E0B] font-semibold">SMK Islam Al Hikmah Istiqomah</span>
+    </footer>
+  </section>
+
+  <!-- Overlay Kilatan Transisi -->
+  <div id="surprise-flash-overlay" class="fixed inset-0 z-50 hidden pointer-events-none opacity-0 bg-gradient-to-br from-amber-300 via-white to-emerald-300 transition-opacity duration-300 flex items-center justify-center p-4">
+    <div class="bg-navy-950/95 border-4 border-[#F59E0B] rounded-3xl px-8 sm:px-14 py-8 text-center shadow-2xl transform scale-105">
+      <p class="text-emerald-400 text-base sm:text-xl font-extrabold tracking-widest uppercase">
+        ✅ IDENTITAS TERVERIFIKASI
+      </p>
+      <h2 class="text-3xl sm:text-5xl font-black text-amber-300 mt-2 tracking-tight">
+        KEJUTAN TERDETEKSI! 🎉
+      </h2>
+    </div>
+  </div>
+
+
+  <!-- ===================================================================== -->
+  <!-- TAHAP 3: LAYAR KEJUTAN ULANG TAHUN KE-26 (AUTOPLAY & INTERAKTIF)       -->
+  <!-- ===================================================================== -->
+  <section id="birthday-screen" class="hidden min-h-screen w-full bg-gradient-to-b from-emerald-950 via-[#0B192C] to-navy-950 islamic-pattern relative overflow-hidden">
+    
+    <canvas id="celebration-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-20"></canvas>
+    <div id="balloon-container" class="fixed inset-0 pointer-events-none z-10 overflow-hidden"></div>
+
+    <nav class="sticky top-0 z-30 w-full bg-navy-950/85 backdrop-blur-lg border-b border-amber-400/30 px-4 sm:px-8 py-3 shadow-lg">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-400/20 border border-amber-400/50 text-xl">
+            🎉
+          </span>
+          <div>
+            <p class="text-xs font-bold uppercase tracking-wider text-amber-400">Perayaan Milad Ke-26</p>
+            <p class="text-sm sm:text-base font-bold text-white">SMK ISLAM AL HIKMAH ISTIQOMAH</p>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onclick="replayBirthdaySong()"
+            class="px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 active:scale-95 border border-amber-400/60 text-amber-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
+          >
+            <span>🎵</span>
+            <span>Putar Ulang Musik</span>
+          </button>
+
+          <button
+            id="btn-toggle-audio"
+            type="button"
+            onclick="toggleMuteAudio()"
+            class="px-4 py-2.5 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/40 active:scale-95 border border-emerald-400/60 text-emerald-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
+          >
+            <span id="audio-icon">🔊</span>
+            <span id="audio-label">Suara: Aktif</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="launchFireworksBurst(5)"
+            class="px-4 py-2.5 rounded-xl bg-rose-500/25 hover:bg-rose-500/35 active:scale-95 border border-rose-400/60 text-rose-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
+          >
+            <span>🎆</span>
+            <span class="hidden sm:inline">Kembang Api</span>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="relative z-20 max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12 space-y-12">
+
+      <!-- HERO CARD -->
+      <div class="animate-pop-in bg-gradient-to-br from-emerald-900/75 via-[#0B192C]/90 to-navy-950/95 border-2 border-amber-400/50 rounded-3xl p-6 sm:p-10 lg:p-12 shadow-2xl shadow-black/70 backdrop-blur-xl relative overflow-hidden">
+        <div class="absolute -top-24 -right-24 w-72 h-72 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          
+          <div class="lg:col-span-5 flex flex-col items-center space-y-4">
+            <div class="relative group">
+              <div class="absolute -top-7 left-1/2 -translate-x-1/2 z-20 text-4xl sm:text-5xl drop-shadow-[0_4px_10px_rgba(245,158,11,0.7)] select-none">
+                👑
+              </div>
+
+              <div class="absolute -inset-2 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-300 to-emerald-400 opacity-75 blur-md"></div>
+              
+              <div class="relative w-64 h-80 sm:w-72 sm:h-96 rounded-3xl p-2 bg-gradient-to-b from-amber-300 via-[#F59E0B] to-emerald-700 shadow-2xl">
+                <div class="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-b from-slate-100 via-emerald-50 to-amber-50 relative">
+                  <img
+                    id="celebration-hero-photo"
+                    src="image_462aa6.png"
+                    alt="Bapak Ikhsan Huzali, M.Pd"
+                    style="object-fit: cover; object-position: top center;"
+                    class="w-full h-full transition-transform duration-700 group-hover:scale-105"
+                    onerror="this.onerror=null; this.src='https://placehold.co/450x600/064e3b/fbbf24?text=Bapak+Ikhsan+Huzali,+M.Pd';"
+                  />
+                  <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-navy-950/90 via-navy-950/45 to-transparent flex items-end justify-center pb-3 px-3">
+                    <span id="celebration-photo-caption" class="text-xs sm:text-sm font-bold tracking-wider uppercase text-amber-300 text-center">
+                      Pendidik Teladan &amp; Inspiratif
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="absolute -bottom-5 -right-5 w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-amber-300 via-[#F59E0B] to-yellow-600 border-4 border-navy-950 shadow-xl flex flex-col items-center justify-center transform rotate-6">
+                <span class="text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-navy-950 leading-none">KE-</span>
+                <span class="text-3xl sm:text-4xl font-black text-navy-950 leading-none">26</span>
+              </div>
+            </div>
+
+            <div id="photo-source-toggle-wrap" class="inline-flex items-center p-1 rounded-2xl bg-navy-950/90 border border-amber-400/40 shadow-md">
+              <button
+                id="btn-photo-candid"
+                type="button"
+                onclick="switchHeroPhotoMode('candid')"
+                class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer bg-amber-400 text-navy-950"
+              >
+                📸 Foto Candid Kamera
+              </button>
+              <button
+                id="btn-photo-official"
+                type="button"
+                onclick="switchHeroPhotoMode('official')"
+                class="px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer text-slate-300 hover:text-white"
+              >
+                👔 Foto Resmi
+              </button>
+            </div>
+          </div>
+
+          <div class="lg:col-span-7 text-center lg:text-left space-y-5">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-400/15 border border-amber-400/50 text-amber-300 text-xs sm:text-sm font-extrabold tracking-widest uppercase">
+              <span>✨</span>
+              <span>Barakallah Fii Umrik • Milad Ke-26</span>
+              <span>✨</span>
+            </div>
+
+            <div class="space-y-2">
+              <h1 class="font-serif text-3xl sm:text-5xl xl:text-6xl font-extrabold leading-tight bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-200 bg-clip-text text-transparent drop-shadow">
+                SELAMAT ULANG TAHUN KE-26
+              </h1>
+              <h2 class="text-xl sm:text-3xl font-extrabold text-emerald-300 tracking-tight">
+                Semoga Panjang Umur, Sehat &amp; Penuh Keberkahan
+              </h2>
+            </div>
+
+            <div class="bg-navy-950/85 border-l-4 border-[#F59E0B] rounded-2xl p-5 sm:p-6 shadow-inner space-y-1">
+              <p class="text-xs sm:text-sm uppercase tracking-widest text-emerald-400 font-bold">
+                Teruntuk Yang Kami Hormati &amp; Banggakan:
+              </p>
+              <p class="text-2xl sm:text-4xl font-black text-amber-300 tracking-tight">
+                Bapak IKHSAN HUZALI, M.Pd
+              </p>
+              <p class="text-sm sm:text-lg font-semibold text-slate-200 pt-1">
+                Dari <span class="text-emerald-300 font-extrabold">Keluarga Besar SMK Islam Al Hikmah Istiqomah</span>
+              </p>
+            </div>
+
+            <blockquote class="bg-emerald-950/65 border border-emerald-400/30 rounded-2xl p-5 sm:p-6 text-base sm:text-xl leading-relaxed text-slate-100 italic">
+              “Semoga senantiasa diberikan kesehatan, umur yang berkah, kesuksesan dalam mendidik generasi bangsa, serta kebahagiaan dunia dan akhirat.”
+              <footer class="not-italic text-sm sm:text-base font-bold text-amber-300 mt-3">
+                — Aamiin Ya Rabbal 'Alamin 🤲
+              </footer>
+            </blockquote>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ZONA KUE & 3 KADO -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        
+        <div class="lg:col-span-5 bg-[#0B192C]/95 border border-amber-400/35 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between items-center text-center">
+          <div class="space-y-1">
+            <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Interaksi Layar Sentuh</span>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-white">Kue Ulang Tahun Ke-26</h3>
+            <p id="cake-instruction" class="text-sm sm:text-base text-slate-300">
+              Sentuh kue atau tekan tombol di bawah untuk meniup lilin!
+            </p>
+          </div>
+
+          <div
+            id="interactive-cake-area"
+            onclick="blowOutCandles()"
+            role="button"
+            tabindex="0"
+            aria-label="Tiup Lilin Ulang Tahun 26"
+            class="my-6 py-4 px-6 rounded-3xl hover:bg-white/5 active:scale-95 transition cursor-pointer select-none flex flex-col items-center justify-center relative"
+          >
+            <div class="flex items-end justify-center gap-6 mb-1 z-10">
+              <div class="relative flex flex-col items-center">
+                <div id="flame-2" class="candle-flame w-5 h-8 rounded-full bg-gradient-to-t from-orange-500 via-amber-300 to-white shadow-[0_0_20px_#fbbf24] mb-1"></div>
+                <div id="smoke-2" class="hidden absolute -top-6 left-1/2 w-4 h-4 rounded-full bg-slate-300/70 blur-sm"></div>
+                <span class="text-5xl sm:text-6xl font-black bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-none">
+                  2
+                </span>
+                <div class="w-2 h-3 bg-amber-200 rounded-b"></div>
+              </div>
+
+              <div class="relative flex flex-col items-center">
+                <div id="flame-6" class="candle-flame w-5 h-8 rounded-full bg-gradient-to-t from-orange-500 via-amber-300 to-white shadow-[0_0_20px_#fbbf24] mb-1"></div>
+                <div id="smoke-6" class="hidden absolute -top-6 left-1/2 w-4 h-4 rounded-full bg-slate-300/70 blur-sm"></div>
+                <span class="text-5xl sm:text-6xl font-black bg-gradient-to-b from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] leading-none">
+                  6
+                </span>
+                <div class="w-2 h-3 bg-amber-200 rounded-b"></div>
+              </div>
+            </div>
+
+            <div class="w-44 sm:w-52 h-14 rounded-t-2xl bg-gradient-to-r from-[#059669] via-emerald-600 to-[#059669] border-t-4 border-amber-200 relative shadow-md flex items-center justify-around px-3">
+              <span class="w-3 h-3 rounded-full bg-amber-300"></span>
+              <span class="w-3 h-3 rounded-full bg-rose-400"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-300"></span>
+              <span class="w-3 h-3 rounded-full bg-rose-400"></span>
+              <span class="w-3 h-3 rounded-full bg-amber-300"></span>
+            </div>
+
+            <div class="w-60 sm:w-72 h-16 rounded-t-xl rounded-b-lg bg-gradient-to-r from-amber-600 via-[#F59E0B] to-amber-600 border-t-4 border-white/90 relative shadow-xl flex items-center justify-center">
+              <span class="text-xs sm:text-sm font-extrabold tracking-widest uppercase text-navy-950 bg-amber-200/90 px-4 py-1 rounded-full">
+                Barakallah Fii Umrik
+              </span>
+            </div>
+
+            <div class="w-72 sm:w-80 h-3.5 rounded-full bg-gradient-to-r from-slate-400 via-white to-slate-400 shadow-lg mt-0.5"></div>
+          </div>
+
+          <div id="cake-celebration-msg" class="hidden mb-4 px-4 py-3 rounded-2xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 text-sm sm:text-base font-bold">
+            🎊 MasyaAllah! Semoga seluruh doa &amp; harapan Bapak Ikhsan di usia ke-26 diijabah Allah SWT!
+          </div>
+
+          <button
+            id="btn-candle-action"
+            type="button"
+            onclick="toggleCandles()"
+            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-amber-400 to-[#F59E0B] hover:from-amber-300 hover:to-amber-400 active:scale-95 text-navy-950 font-extrabold text-lg sm:text-xl shadow-lg shadow-amber-500/25 transition cursor-pointer"
+          >
+            Tiup Lilin 🎂
+          </button>
+        </div>
+
+        <div class="lg:col-span-7 bg-[#0B192C]/95 border border-amber-400/35 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col justify-between">
+          <div class="text-center sm:text-left mb-6">
+            <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Kejutan Spesial</span>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-white">3 Kotak Kado Misteri</h3>
+            <p class="text-sm sm:text-base text-slate-300 mt-1">
+              Sentuh masing-masing kotak kado di layar untuk membuka doa &amp; pesan kejutan!
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 flex-1">
+            <div
+              id="gift-card-1"
+              onclick="openMysteryGift(1)"
+              role="button"
+              tabindex="0"
+              class="gift-idle rounded-2xl bg-gradient-to-b from-amber-500/20 to-navy-950 border-2 border-amber-400/50 p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:border-amber-300 shadow-lg"
+            >
+              <div id="gift-closed-1" class="space-y-3">
+                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-4xl shadow-lg relative">
+                  🎁
+                  <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-navy-950 border border-amber-400 text-amber-300 text-xs font-black flex items-center justify-center">1</span>
+                </div>
+                <p class="font-extrabold text-lg text-amber-300">Kado Pertama</p>
+                <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-amber-400/20 text-amber-200">
+                  Sentuh untuk Buka
+                </span>
+              </div>
+
+              <div id="gift-open-1" class="hidden space-y-2 animate-pop-in">
+                <div class="text-3xl">📖✨</div>
+                <h4 class="font-extrabold text-amber-300 text-base sm:text-lg">Doa Keberkahan Ilmu</h4>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  Semoga ilmu yang Bapak ajarkan kepada siswa-siswi SMK Islam Al Hikmah Istiqomah menjadi amal jariyah yang tak pernah terputus pahalanya.
+                </p>
+              </div>
+            </div>
+
+            <div
+              id="gift-card-2"
+              onclick="openMysteryGift(2)"
+              role="button"
+              tabindex="0"
+              class="gift-idle rounded-2xl bg-gradient-to-b from-emerald-500/20 to-navy-950 border-2 border-emerald-400/50 p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:border-emerald-300 shadow-lg"
+            >
+              <div id="gift-closed-2" class="space-y-3">
+                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-700 flex items-center justify-center text-4xl shadow-lg relative">
+                  🎁
+                  <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-navy-950 border border-emerald-400 text-emerald-300 text-xs font-black flex items-center justify-center">2</span>
+                </div>
+                <p class="font-extrabold text-lg text-emerald-300">Kado Kedua</p>
+                <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-200">
+                  Sentuh untuk Buka
+                </span>
+              </div>
+
+              <div id="gift-open-2" class="hidden space-y-2 animate-pop-in">
+                <div class="text-3xl">🤲💚</div>
+                <h4 class="font-extrabold text-emerald-300 text-base sm:text-lg">Doa Kesehatan &amp; Rezeki</h4>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  Di usia ke-26 ini, semoga Allah SWT melimpahkan kesehatan prima, rezeki yang halal lagi berkah, serta kemudahan dalam setiap langkah karier Bapak.
+                </p>
+              </div>
+            </div>
+
+            <div
+              id="gift-card-3"
+              onclick="openMysteryGift(3)"
+              role="button"
+              tabindex="0"
+              class="gift-idle rounded-2xl bg-gradient-to-b from-sky-500/20 to-navy-950 border-2 border-sky-400/50 p-5 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:border-sky-300 shadow-lg"
+            >
+              <div id="gift-closed-3" class="space-y-3">
+                <div class="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-600 flex items-center justify-center text-4xl shadow-lg relative">
+                  🎁
+                  <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-navy-950 border border-sky-400 text-sky-300 text-xs font-black flex items-center justify-center">3</span>
+                </div>
+                <p class="font-extrabold text-lg text-sky-300">Kado Ketiga</p>
+                <span class="inline-block text-xs font-bold px-3 py-1 rounded-full bg-sky-400/20 text-sky-200">
+                  Sentuh untuk Buka
+                </span>
+              </div>
+
+              <div id="gift-open-3" class="hidden space-y-2 animate-pop-in">
+                <div class="text-3xl">🏫🌟</div>
+                <h4 class="font-extrabold text-sky-300 text-base sm:text-lg">Pesan Keluarga Besar SMK</h4>
+                <p class="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  Terima kasih telah menjadi rekan kerja yang hangat, berdedikasi, dan penuh semangat. Teruslah bersinar bersama SMK Islam Al Hikmah Istiqomah!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DINDING UCAPAN REKAN GURU -->
+      <div class="bg-[#0B192C]/95 border border-amber-400/35 rounded-3xl p-6 sm:p-10 shadow-xl space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/80 pb-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Papan Apresiasi Interaktif</span>
+            <h3 class="text-2xl sm:text-3xl font-extrabold text-white">
+              Dinding Ucapan &amp; Doa Rekan Guru
+            </h3>
+            <p class="text-sm sm:text-base text-slate-300">
+              Untaian doa hangat dari keluarga besar SMK Islam Al Hikmah Istiqomah untuk Bapak Ikhsan Huzali, M.Pd.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onclick="toggleWishForm(true)"
+            class="px-6 py-4 rounded-2xl bg-gradient-to-r from-[#059669] to-teal-500 hover:from-emerald-400 hover:to-teal-400 active:scale-95 text-navy-950 font-extrabold text-base sm:text-lg shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition cursor-pointer shrink-0"
+          >
+            <span>+ Tambah Ucapan Rekan</span>
+          </button>
+        </div>
+
+        <div id="wish-form-panel" class="hidden bg-navy-950/90 border-2 border-emerald-400/50 rounded-2xl p-6 space-y-4 animate-pop-in">
+          <div class="flex items-center justify-between">
+            <h4 class="text-lg sm:text-xl font-extrabold text-emerald-300">✍️ Tulis Ucapan &amp; Doa Anda</h4>
+            <button
+              type="button"
+              onclick="toggleWishForm(false)"
+              class="text-slate-400 hover:text-white px-3 py-1 rounded-lg bg-slate-800 text-sm font-bold cursor-pointer"
+            >
+              Tutup ✕
+            </button>
+          </div>
+
+          <form onsubmit="submitNewWish(event)" class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <div class="md:col-span-4 space-y-1.5">
+              <label for="wish-sender" class="block text-sm font-bold text-amber-300">Nama / Jabatan Rekan</label>
+              <input
+                id="wish-sender"
+                type="text"
+                required
+                placeholder="Contoh: Ibu Siti Aminah, S.Pd (Waka Kurikulum)"
+                class="w-full px-4 py-3.5 rounded-xl bg-[#0B192C] border border-slate-600 focus:border-amber-400 focus:outline-none text-white text-base"
+              />
+            </div>
+
+            <div class="md:col-span-6 space-y-1.5">
+              <label for="wish-message" class="block text-sm font-bold text-amber-300">Ucapan &amp; Doa Terbaik</label>
+              <input
+                id="wish-message"
+                type="text"
+                required
+                placeholder="Tuliskan doa terbaik untuk Bapak Ikhsan ke-26..."
+                class="w-full px-4 py-3.5 rounded-xl bg-[#0B192C] border border-slate-600 focus:border-amber-400 focus:outline-none text-white text-base"
+              />
+            </div>
+
+            <div class="md:col-span-2 flex items-end">
+              <button
+                type="submit"
+                class="w-full py-3.5 px-5 rounded-xl bg-amber-400 hover:bg-amber-300 active:scale-95 text-navy-950 font-extrabold text-base shadow-md transition cursor-pointer"
+              >
+                Kirim 🚀
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div id="wishes-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <article class="bg-navy-950/85 border border-amber-400/30 rounded-2xl p-6 space-y-3 shadow-md">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full bg-amber-400/15 text-amber-300 text-xs font-extrabold">Pimpinan Sekolah</span>
+              <span class="text-lg">🌟</span>
+            </div>
+            <p class="text-slate-100 text-base leading-relaxed">
+              “Barakallah fii umrik Bapak Ikhsan Huzali, M.Pd. Di usia ke-26 ini semoga semakin amanah, visioner, dan senantiasa membawa keberkahan bagi kemajuan SMK Islam Al Hikmah Istiqomah.”
+            </p>
+            <p class="text-sm font-bold text-emerald-400 pt-2 border-t border-slate-800">
+              — Kepala Sekolah SMK Islam Al Hikmah Istiqomah
+            </p>
+          </article>
+
+          <article class="bg-navy-950/85 border border-emerald-400/30 rounded-2xl p-6 space-y-3 shadow-md">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full bg-emerald-400/15 text-emerald-300 text-xs font-extrabold">Rekan Sejawat</span>
+              <span class="text-lg">💐</span>
+            </div>
+            <p class="text-slate-100 text-base leading-relaxed">
+              “Selamat ulang tahun ke-26 Pak Ikhsan! Terima kasih selalu menjadi rekan guru yang ramah, kompak, dan inspiratif. Sehat selalu dan sukses terus kariernya!”
+            </p>
+            <p class="text-sm font-bold text-amber-300 pt-2 border-t border-slate-800">
+              — Dewan Guru SMK Islam Al Hikmah Istiqomah
+            </p>
+          </article>
+
+          <article class="bg-navy-950/85 border border-sky-400/30 rounded-2xl p-6 space-y-3 shadow-md">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full bg-sky-400/15 text-sky-300 text-xs font-extrabold">Kependidikan</span>
+              <span class="text-lg">🎂</span>
+            </div>
+            <p class="text-slate-100 text-base leading-relaxed">
+              “Selamat milad ke-26 Bapak Ikhsan Huzali, M.Pd. Semoga panjang umur dalam ketaatan, dimudahkan segala urusannya, dan selalu dilimpahi kebahagiaan bersama keluarga.”
+            </p>
+            <p class="text-sm font-bold text-sky-300 pt-2 border-t border-slate-800">
+              — Staf Tata Usaha &amp; Kependidikan
+            </p>
+          </article>
+        </div>
+      </div>
+
+    </main>
+
+    <footer class="relative z-30 max-w-7xl mx-auto px-4 sm:px-8 pb-8 pt-2 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-400 text-xs sm:text-sm">
+      <p>
+        Dibuat penuh rasa hormat &amp; kekeluargaan oleh <span class="text-amber-300 font-semibold">Keluarga Besar SMK Islam Al Hikmah Istiqomah</span>
+      </p>
+
+      <button
+        type="button"
+        onclick="resetToAttendanceMode()"
+        class="px-4 py-2.5 rounded-xl bg-navy-950/90 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white font-semibold text-xs sm:text-sm flex items-center gap-2 transition cursor-pointer"
+      >
+        <span>↺</span>
+        <span>Ulangi dari Awal (Mode Absen)</span>
+      </button>
+    </footer>
+  </section>
+
+  <!-- Toast Notifikasi -->
+  <div id="toast-notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 translate-y-4 transition-all duration-300 bg-navy-950/95 border-2 border-amber-400 text-white px-6 py-3.5 rounded-2xl shadow-2xl font-bold text-sm sm:text-base text-center max-w-md">
+    Notifikasi
+  </div>
+
+  <script>
+    // =========================================================================
+    // FULLSCREEN TOGGLE
+    // =========================================================================
+    function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // JAM REAL-TIME
+    // =========================================================================
+    const HARI_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const BULAN_ID = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+
+    function formatTanggalIndonesia(dateObj) {
+      return `${HARI_ID[dateObj.getDay()]}, ${dateObj.getDate()} ${BULAN_ID[dateObj.getMonth()]} ${dateObj.getFullYear()}`;
+    }
+
+    function formatJamWIB(dateObj) {
+      const hh = String(dateObj.getHours()).padStart(2, '0');
+      const mm = String(dateObj.getMinutes()).padStart(2, '0');
+      const ss = String(dateObj.getSeconds()).padStart(2, '0');
+      return `${hh}:${mm}:${ss} WIB`;
+    }
+
+    function updateClock() {
+      try {
+        const now = new Date();
+        const clockEl = document.getElementById('live-clock');
+        const dateEl = document.getElementById('live-date');
+        if (clockEl) clockEl.textContent = formatJamWIB(now);
+        if (dateEl) dateEl.textContent = formatTanggalIndonesia(now);
+      } catch (err) {}
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // =========================================================================
+    // AUDIO ENGINE (WEB AUDIO API)
+    // =========================================================================
+    let audioCtx = null;
+    let isMuted = false;
+    let melodyTimers = [];
+    let melodyLoopTimeout = null;
+
+    function unlockAndGetAudioContext() {
+      try {
+        if (!audioCtx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) audioCtx = new AudioContextClass();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        return audioCtx;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function playTone(freq, startTime, duration, type = 'triangle', volume = 0.16) {
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, startTime);
+
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime);
+        osc.stop(startTime + duration + 0.03);
+      } catch (e) {}
+    }
+
+    function playScannerBeep(pitch = 660) {
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+        playTone(pitch, ctx.currentTime, 0.14, 'sine', 0.16);
+      } catch (e) {}
+    }
+
+    function playCameraShutterSound() {
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+
+        const bufferSize = Math.floor(ctx.sampleRate * 0.16);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.04));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1800, ctx.currentTime);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.32, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.16);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+
+        playTone(880, ctx.currentTime + 0.12, 0.25, 'triangle', 0.15);
+      } catch (e) {}
+    }
+
+    function playChimeSound() {
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        playTone(587.33, now, 0.18, 'triangle', 0.16);
+        playTone(880.00, now + 0.14, 0.35, 'triangle', 0.18);
+      } catch (e) {}
+    }
+
+    function playSurpriseFanfare() {
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const fanfareNotes = [
+          { f: 523.25, t: 0.00, d: 0.16 },
+          { f: 659.25, t: 0.12, d: 0.16 },
+          { f: 783.99, t: 0.24, d: 0.16 },
+          { f: 1046.50, t: 0.36, d: 0.55 }
+        ];
+        fanfareNotes.forEach(n => {
+          playTone(n.f, now + n.t, n.d, 'triangle', 0.22);
+          playTone(n.f * 0.5, now + n.t, n.d, 'sine', 0.10);
+        });
+      } catch (e) {}
+    }
+
+    function stopBirthdaySong() {
+      melodyTimers.forEach(id => clearTimeout(id));
+      melodyTimers = [];
+      if (melodyLoopTimeout) {
+        clearTimeout(melodyLoopTimeout);
+        melodyLoopTimeout = null;
+      }
+    }
+
+    function playBirthdayMelody(startDelayMs = 850) {
+      stopBirthdaySong();
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+
+        const melody = [
+          { f: 261.63, b: 130.81, d: 0.36 }, { f: 261.63, b: 130.81, d: 0.26 }, { f: 293.66, b: 130.81, d: 0.62 }, { f: 261.63, b: 130.81, d: 0.62 }, { f: 349.23, b: 174.61, d: 0.62 }, { f: 329.63, b: 130.81, d: 1.05 },
+          { f: 261.63, b: 130.81, d: 0.36 }, { f: 261.63, b: 130.81, d: 0.26 }, { f: 293.66, b: 130.81, d: 0.62 }, { f: 261.63, b: 130.81, d: 0.62 }, { f: 392.00, b: 196.00, d: 0.62 }, { f: 349.23, b: 174.61, d: 1.05 },
+          { f: 261.63, b: 130.81, d: 0.36 }, { f: 261.63, b: 130.81, d: 0.26 }, { f: 523.25, b: 174.61, d: 0.62 }, { f: 440.00, b: 174.61, d: 0.62 }, { f: 349.23, b: 174.61, d: 0.52 }, { f: 329.63, b: 130.81, d: 0.52 }, { f: 293.66, b: 146.83, d: 1.05 },
+          { f: 466.16, b: 233.08, d: 0.36 }, { f: 466.16, b: 233.08, d: 0.26 }, { f: 440.00, b: 174.61, d: 0.62 }, { f: 349.23, b: 174.61, d: 0.62 }, { f: 392.00, b: 196.00, d: 0.62 }, { f: 349.23, b: 174.61, d: 1.25 }
+        ];
+
+        let offsetMs = startDelayMs;
+        melody.forEach((note) => {
+          const timerId = setTimeout(() => {
+            if (!isMuted) {
+              const c = unlockAndGetAudioContext();
+              if (c) {
+                playTone(note.f, c.currentTime, note.d * 0.92, 'triangle', 0.20);
+                playTone(note.b, c.currentTime, note.d * 0.92, 'sine', 0.09);
+              }
+            }
+          }, offsetMs);
+          melodyTimers.push(timerId);
+          offsetMs += note.d * 1000;
+        });
+
+        melodyLoopTimeout = setTimeout(() => {
+          const bdayVisible = !document.getElementById('birthday-screen').classList.contains('hidden');
+          if (!isMuted && bdayVisible) {
+            playBirthdayMelody(200);
+          }
+        }, offsetMs + 1800);
+      } catch (e) {}
+    }
+
+    function replayBirthdaySong() {
+      if (isMuted) {
+        isMuted = false;
+        updateAudioButtonUI();
+      }
+      playBirthdayMelody(150);
+      showToast('🎵 Memutar ulang lagu Selamat Ulang Tahun!');
+    }
+
+    function toggleMuteAudio() {
+      isMuted = !isMuted;
+      if (isMuted) stopBirthdaySong();
+      else playBirthdayMelody(150);
+      updateAudioButtonUI();
+    }
+
+    function updateAudioButtonUI() {
+      const iconEl = document.getElementById('audio-icon');
+      const labelEl = document.getElementById('audio-label');
+      if (iconEl) iconEl.textContent = isMuted ? '🔇' : '🔊';
+      if (labelEl) labelEl.textContent = isMuted ? 'Suara: Bisu' : 'Suara: Aktif';
+    }
+
+    function playBlowAndCheerSound() {
+      if (isMuted) return;
+      try {
+        const ctx = unlockAndGetAudioContext();
+        if (!ctx) return;
+
+        const bufferSize = Math.floor(ctx.sampleRate * 0.45);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.18));
+        }
+
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, ctx.currentTime);
+
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.28, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+        noise.start();
+
+        setTimeout(() => {
+          playSurpriseFanfare();
+          for (let k = 0; k < 8; k++) {
+            setTimeout(() => {
+              const clapSize = Math.floor(ctx.sampleRate * 0.08);
+              const clapBuf = ctx.createBuffer(1, clapSize, ctx.sampleRate);
+              const clapData = clapBuf.getChannelData(0);
+              for (let j = 0; j < clapSize; j++) {
+                clapData[j] = (Math.random() * 2 - 1) * Math.exp(-j / (ctx.sampleRate * 0.025));
+              }
+              const clapSrc = ctx.createBufferSource();
+              clapSrc.buffer = clapBuf;
+              const clapFilter = ctx.createBiquadFilter();
+              clapFilter.type = 'bandpass';
+              clapFilter.frequency.setValueAtTime(1100 + Math.random() * 500, ctx.currentTime);
+              const clapGain = ctx.createGain();
+              clapGain.gain.setValueAtTime(0.18, ctx.currentTime);
+              clapSrc.connect(clapFilter);
+              clapFilter.connect(clapGain);
+              clapGain.connect(ctx.destination);
+              clapSrc.start();
+            }, k * 110);
+          }
+        }, 350);
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // KAMERA & FACE SCAN (DENGAN SAFE FALLBACK OTOMATIS)
+    // =========================================================================
+    const OFFICIAL_PHOTO_URL = 'image_462aa6.png';
+    let capturedCandidDataUrl = null;
+    let activeMediaStream = null;
+    let scanIntervalId = null;
+
+    function stopWebcamStream() {
+      if (activeMediaStream) {
+        activeMediaStream.getTracks().forEach(track => track.stop());
+        activeMediaStream = null;
+      }
+      const videoEl = document.getElementById('webcam-video');
+      if (videoEl) videoEl.srcObject = null;
+    }
+
+    async function startCameraFaceScan() {
+      unlockAndGetAudioContext();
+      playScannerBeep(580);
+
+      // Coba masuk fullscreen secara otomatis saat tombol pertama ditekan
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        }
+      } catch (e) {}
+
+      if (scanIntervalId) {
+        clearInterval(scanIntervalId);
+        scanIntervalId = null;
+      }
+
+      const now = new Date();
+      const recordedEl = document.getElementById('recorded-timestamp');
+      if (recordedEl) {
+        recordedEl.textContent = `${formatTanggalIndonesia(now)} • ${formatJamWIB(now)}`;
+      }
+
+      document.getElementById('stage-1-neutral').classList.add('hidden');
+      document.getElementById('stage-2b-verification').classList.add('hidden');
+      document.getElementById('stage-2a-camera-scan').classList.remove('hidden');
+
+      const videoEl = document.getElementById('webcam-video');
+      const fallbackSim = document.getElementById('camera-fallback-sim');
+      const statusText = document.getElementById('camera-status-text');
+      const countdownEl = document.getElementById('scan-countdown-number');
+      const progressBar = document.getElementById('scan-progress-bar');
+
+      videoEl.classList.remove('hidden');
+      fallbackSim.classList.add('hidden');
+      countdownEl.textContent = '3';
+      progressBar.style.width = '10%';
+
+      let hasLiveCamera = false;
+
+      try {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+          activeMediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 720 } },
+            audio: false
+          });
+          videoEl.srcObject = activeMediaStream;
+          await videoEl.play();
+          hasLiveCamera = true;
+          statusText.textContent = 'Wajah terdeteksi! Tetap menghadap kamera selama hitungan mundur...';
+        } else {
+          throw new Error('getUserMedia tidak didukung');
+        }
+      } catch (err) {
+        // Fallback aman otomatis agar tidak blank putih jika HTTP atau izin diblokir
+        hasLiveCamera = false;
+        videoEl.classList.add('hidden');
+        fallbackSim.classList.remove('hidden');
+        statusText.textContent = 'Mode aman aktif — Menggunakan database resmi sekolah...';
+      }
+
+      let remaining = 3;
+      setTimeout(() => { progressBar.style.width = '35%'; }, 80);
+
+      scanIntervalId = setInterval(() => {
+        remaining -= 1;
+        if (remaining > 0) {
+          countdownEl.textContent = String(remaining);
+          progressBar.style.width = remaining === 2 ? '68%' : '92%';
+          playScannerBeep(remaining === 2 ? 700 : 840);
+        } else {
+          clearInterval(scanIntervalId);
+          scanIntervalId = null;
+          countdownEl.textContent = '0';
+          progressBar.style.width = '100%';
+          capturePhotoAndShowVerification(hasLiveCamera);
+        }
+      }, 950);
+    }
+
+    function capturePhotoAndShowVerification(hasLiveCamera) {
+      const flashEl = document.getElementById('camera-flash-effect');
+      flashEl.classList.remove('hidden');
+      playCameraShutterSound();
+
+      if (hasLiveCamera) {
+        try {
+          const videoEl = document.getElementById('webcam-video');
+          const canvasEl = document.getElementById('capture-canvas');
+          const vw = videoEl.videoWidth || 640;
+          const vh = videoEl.videoHeight || 720;
+          canvasEl.width = vw;
+          canvasEl.height = vh;
+
+          const cctx = canvasEl.getContext('2d');
+          cctx.translate(vw, 0);
+          cctx.scale(-1, 1);
+          cctx.drawImage(videoEl, 0, 0, vw, vh);
+
+          capturedCandidDataUrl = canvasEl.toDataURL('image/jpeg', 0.92);
+        } catch (e) {
+          capturedCandidDataUrl = null;
+        }
+      } else {
+        capturedCandidDataUrl = null;
+      }
+
+      stopWebcamStream();
+
+      setTimeout(() => {
+        flashEl.classList.add('hidden');
+        document.getElementById('stage-2a-camera-scan').classList.add('hidden');
+        document.getElementById('stage-2b-verification').classList.remove('hidden');
+
+        const verifiedImg = document.getElementById('verified-photo-img');
+        const badgeEl = document.getElementById('verified-photo-badge');
+        const subtitleEl = document.getElementById('verification-subtitle');
+
+        if (capturedCandidDataUrl) {
+          verifiedImg.src = capturedCandidDataUrl;
+          badgeEl.textContent = 'TANGKAPAN BIOMETRIK LIVE';
+          subtitleEl.textContent = 'Wajah berhasil dipindai via kamera & dicocokkan dengan data kepegawaian';
+        } else {
+          verifiedImg.src = OFFICIAL_PHOTO_URL;
+          badgeEl.textContent = 'FOTO PROFIL DATABASE';
+          subtitleEl.textContent = 'Profil pegawai berhasil dimuat dari database SMK Islam Al Hikmah Istiqomah';
+        }
+      }, 280);
+    }
+
+    function retakeCameraScan() {
+      startCameraFaceScan();
+    }
+
+    // =========================================================================
+    // VERIFIKASI SELESAI -> MASUK KE KEJUTAN ULANG TAHUN
+    // =========================================================================
+    function confirmVerificationAndTriggerSurprise() {
+      unlockAndGetAudioContext();
+
+      const flashOverlay = document.getElementById('surprise-flash-overlay');
+      flashOverlay.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        flashOverlay.classList.remove('opacity-0');
+        flashOverlay.classList.add('opacity-100');
+      });
+
+      playSurpriseFanfare();
+
+      setTimeout(() => {
+        document.getElementById('attendance-screen').classList.add('hidden');
+        document.getElementById('birthday-screen').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'instant' });
+
+        const toggleWrap = document.getElementById('photo-source-toggle-wrap');
+        if (capturedCandidDataUrl) {
+          toggleWrap.classList.remove('hidden');
+          switchHeroPhotoMode('candid');
+        } else {
+          toggleWrap.classList.add('hidden');
+          switchHeroPhotoMode('official');
+        }
+
+        startCelebrationCanvas();
+        spawnBalloons();
+        launchFireworksBurst(6);
+        playBirthdayMelody(850);
+
+        flashOverlay.classList.remove('opacity-100');
+        flashOverlay.classList.add('opacity-0');
+        setTimeout(() => {
+          flashOverlay.classList.add('hidden');
+        }, 320);
+      }, 650);
+    }
+
+    function switchHeroPhotoMode(mode) {
+      const heroImg = document.getElementById('celebration-hero-photo');
+      const captionEl = document.getElementById('celebration-photo-caption');
+      const btnCandid = document.getElementById('btn-photo-candid');
+      const btnOfficial = document.getElementById('btn-photo-official');
+
+      if (mode === 'candid' && capturedCandidDataUrl) {
+        heroImg.src = capturedCandidDataUrl;
+        captionEl.textContent = 'Momen Kejutan Langsung di Kantor';
+        btnCandid.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer bg-amber-400 text-navy-950';
+        btnOfficial.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer text-slate-300 hover:text-white';
+      } else {
+        heroImg.src = OFFICIAL_PHOTO_URL;
+        captionEl.textContent = 'Pendidik Teladan & Inspiratif';
+        btnOfficial.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer bg-amber-400 text-navy-950';
+        btnCandid.className = 'px-3.5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition cursor-pointer text-slate-300 hover:text-white';
+      }
+    }
+
+    // =========================================================================
+    // INTERAKSI KUE & KADO
+    // =========================================================================
+    let candlesLit = true;
+
+    function toggleCandles() {
+      if (candlesLit) blowOutCandles();
+      else relightCandles();
+    }
+
+    function blowOutCandles() {
+      if (!candlesLit) return;
+      candlesLit = false;
+
+      document.getElementById('flame-2').classList.add('hidden');
+      document.getElementById('flame-6').classList.add('hidden');
+
+      const smoke2 = document.getElementById('smoke-2');
+      const smoke6 = document.getElementById('smoke-6');
+      smoke2.classList.remove('hidden');
+      smoke6.classList.remove('hidden');
+      smoke2.classList.add('candle-smoke');
+      smoke6.classList.add('candle-smoke');
+
+      playBlowAndCheerSound();
+      launchConfettiExplosion(150);
+      launchFireworksBurst(5);
+
+      document.getElementById('cake-instruction').textContent = 'Lilin ke-26 berhasil ditiup! Tepuk tangan meriah! 👏';
+      document.getElementById('cake-celebration-msg').classList.remove('hidden');
+
+      const btn = document.getElementById('btn-candle-action');
+      btn.textContent = 'Nyalakan Kembali Lilin 🔥';
+      btn.classList.remove('from-amber-400', 'to-[#F59E0B]');
+      btn.classList.add('from-emerald-400', 'to-teal-400');
+    }
+
+    function relightCandles() {
+      candlesLit = true;
+
+      document.getElementById('flame-2').classList.remove('hidden');
+      document.getElementById('flame-6').classList.remove('hidden');
+
+      const smoke2 = document.getElementById('smoke-2');
+      const smoke6 = document.getElementById('smoke-6');
+      smoke2.classList.add('hidden');
+      smoke6.classList.add('hidden');
+      smoke2.classList.remove('candle-smoke');
+      smoke6.classList.remove('candle-smoke');
+
+      document.getElementById('cake-instruction').textContent = 'Sentuh kue atau tekan tombol di bawah untuk meniup lilin!';
+      document.getElementById('cake-celebration-msg').classList.add('hidden');
+
+      const btn = document.getElementById('btn-candle-action');
+      btn.textContent = 'Tiup Lilin 🎂';
+      btn.classList.remove('from-emerald-400', 'to-teal-400');
+      btn.classList.add('from-amber-400', 'to-[#F59E0B]');
+      playChimeSound();
+    }
+
+    const openedGifts = new Set();
+
+    function openMysteryGift(giftNumber) {
+      const closedEl = document.getElementById(`gift-closed-${giftNumber}`);
+      const openEl = document.getElementById(`gift-open-${giftNumber}`);
+      const cardEl = document.getElementById(`gift-card-${giftNumber}`);
+
+      if (!openedGifts.has(giftNumber)) {
+        openedGifts.add(giftNumber);
+        closedEl.classList.add('hidden');
+        openEl.classList.remove('hidden');
+        cardEl.classList.remove('gift-idle');
+        cardEl.classList.add('bg-navy-950/95');
+
+        playChimeSound();
+        launchConfettiExplosion(60);
+      } else {
+        openedGifts.delete(giftNumber);
+        openEl.classList.add('hidden');
+        closedEl.classList.remove('hidden');
+        cardEl.classList.add('gift-idle');
+      }
+    }
+
+    function toggleWishForm(show) {
+      const panel = document.getElementById('wish-form-panel');
+      if (show) {
+        panel.classList.remove('hidden');
+        document.getElementById('wish-sender').focus();
+      } else {
+        panel.classList.add('hidden');
+      }
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function submitNewWish(event) {
+      event.preventDefault();
+      const senderInput = document.getElementById('wish-sender');
+      const messageInput = document.getElementById('wish-message');
+
+      const sender = senderInput.value.trim();
+      const message = messageInput.value.trim();
+      if (!sender || !message) return;
+
+      const grid = document.getElementById('wishes-grid');
+      const card = document.createElement('article');
+      card.className = 'animate-pop-in bg-gradient-to-br from-emerald-950/90 to-navy-950 border-2 border-amber-400/60 rounded-2xl p-6 space-y-3 shadow-lg';
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-extrabold">Ucapan Baru ✨</span>
+          <span class="text-lg">🎉</span>
+        </div>
+        <p class="text-slate-100 text-base leading-relaxed">
+          “${escapeHTML(message)}”
+        </p>
+        <p class="text-sm font-bold text-emerald-300 pt-2 border-t border-slate-800">
+          — ${escapeHTML(sender)}
+        </p>
+      `;
+
+      grid.prepend(card);
+      senderInput.value = '';
+      messageInput.value = '';
+      toggleWishForm(false);
+
+      playChimeSound();
+      launchConfettiExplosion(65);
+      showToast('✨ Ucapan & doa Anda berhasil ditambahkan ke dinding!');
+    }
+
+    // =========================================================================
+    // CANVAS VISUALS (KONFETI & KEMBANG API)
+    // =========================================================================
+    let canvas, ctx;
+    let confettiParticles = [];
+    let fireworkSparks = [];
+    let celebrationAnimId = null;
+    const FESTIVE_COLORS = ['#F59E0B', '#059669', '#FBBF24', '#34D399', '#FDE68A', '#38BDF8', '#FB7185'];
+
+    function resizeCanvas() {
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function launchConfettiExplosion(count = 100) {
+      if (!canvas) return;
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: Math.random() * canvas.width,
+          y: -20 - Math.random() * 140,
+          w: 7 + Math.random() * 8,
+          h: 10 + Math.random() * 10,
+          color: FESTIVE_COLORS[Math.floor(Math.random() * FESTIVE_COLORS.length)],
+          vx: (Math.random() - 0.5) * 4,
+          vy: 2.2 + Math.random() * 3.8,
+          rot: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 10
+        });
+      }
+    }
+
+    function launchFireworksBurst(count = 3) {
+      if (!canvas) return;
+      for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+          const targetX = canvas.width * (0.15 + Math.random() * 0.7);
+          const targetY = canvas.height * (0.15 + Math.random() * 0.35);
+          const color = FESTIVE_COLORS[Math.floor(Math.random() * FESTIVE_COLORS.length)];
+          createFireworkExplosion(targetX, targetY, color);
+        }, i * 280);
+      }
+    }
+
+    function createFireworkExplosion(x, y, color) {
+      const sparkCount = 44;
+      for (let i = 0; i < sparkCount; i++) {
+        const angle = (Math.PI * 2 * i) / sparkCount;
+        const speed = 1.8 + Math.random() * 4.2;
+        fireworkSparks.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1,
+          decay: 0.014 + Math.random() * 0.012,
+          color
+        });
+      }
+    }
+
+    function startCelebrationCanvas() {
+      canvas = document.getElementById('celebration-canvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      launchConfettiExplosion(160);
+      if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+
+      function renderLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = confettiParticles.length - 1; i >= 0; i--) {
+          const p = confettiParticles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.rotSpeed;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+
+          if (p.y > canvas.height + 30) confettiParticles.splice(i, 1);
+        }
+
+        if (confettiParticles.length < 35 && Math.random() < 0.25) {
+          launchConfettiExplosion(3);
+        }
+
+        for (let i = fireworkSparks.length - 1; i >= 0; i--) {
+          const s = fireworkSparks[i];
+          s.x += s.vx;
+          s.y += s.vy;
+          s.vy += 0.04;
+          s.alpha -= s.decay;
+
+          if (s.alpha <= 0) {
+            fireworkSparks.splice(i, 1);
+            continue;
+          }
+
+          ctx.save();
+          ctx.globalAlpha = s.alpha;
+          ctx.fillStyle = s.color;
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, 2.8, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        if (Math.random() < 0.015) launchFireworksBurst(1);
+
+        celebrationAnimId = requestAnimationFrame(renderLoop);
+      }
+
+      renderLoop();
+    }
+
+    function spawnBalloons() {
+      const container = document.getElementById('balloon-container');
+      container.innerHTML = '';
+      const balloonColors = [
+        'from-amber-300 to-amber-500',
+        'from-emerald-400 to-emerald-600',
+        'from-teal-300 to-teal-600',
+        'from-yellow-300 to-amber-500'
+      ];
+
+      for (let i = 0; i < 10; i++) {
+        const balloon = document.createElement('div');
+        const colorGrad = balloonColors[i % balloonColors.length];
+        const leftPct = 5 + (i * 9.2);
+        const duration = 14 + (i % 5) * 3;
+        const delay = (i * 1.4);
+
+        balloon.className = `balloon-float absolute bottom-0 w-10 h-12 sm:w-12 sm:h-14 rounded-full bg-gradient-to-b ${colorGrad} opacity-75 shadow-lg`;
+        balloon.style.left = `${leftPct}%`;
+        balloon.style.animationDuration = `${duration}s`;
+        balloon.style.animationDelay = `${delay}s`;
+
+        const string = document.createElement('div');
+        string.className = 'w-px h-10 bg-amber-200/50 mx-auto mt-12 sm:mt-14';
+        balloon.appendChild(string);
+
+        container.appendChild(balloon);
+      }
+    }
+
+    function resetToAttendanceMode() {
+      stopBirthdaySong();
+      stopWebcamStream();
+      if (scanIntervalId) {
+        clearInterval(scanIntervalId);
+        scanIntervalId = null;
+      }
+      if (celebrationAnimId) {
+        cancelAnimationFrame(celebrationAnimId);
+        celebrationAnimId = null;
+      }
+
+      capturedCandidDataUrl = null;
+
+      document.getElementById('birthday-screen').classList.add('hidden');
+      document.getElementById('attendance-screen').classList.remove('hidden');
+
+      document.getElementById('stage-2a-camera-scan').classList.add('hidden');
+      document.getElementById('stage-2b-verification').classList.add('hidden');
+      document.getElementById('stage-1-neutral').classList.remove('hidden');
+
+      relightCandles();
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+
+    let toastTimeout = null;
+    function showToast(message) {
+      const toast = document.getElementById('toast-notification');
+      toast.textContent = message;
+      toast.classList.remove('opacity-0', 'translate-y-4');
+      toast.classList.add('opacity-100', 'translate-y-0');
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', 'translate-y-4');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
